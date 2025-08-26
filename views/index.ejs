@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #11162a;
+        --panel-2: #0e1426;
+        --text: #e7eaf3;
+        --muted: #a9b0c6;
+        --accent: #6ea8fe;
+        --user: #2b7fff;
+        --bot: #1e293b;
+        --input: #0f1530;
+        --border: #24304a;
+        --success: #22c55e;
+        --radius: 14px;
+        --shadow: 0 10px 30px rgba(0,0,0,.35);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: radial-gradient(1200px 800px at 80% -10%, #1a2550 0%, #0b1020 60%);
+        color: var(--text);
+        font: 15px/1.45 Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+      .app {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .chat {
+        width: 100%;
+        max-width: 880px;
+        height: min(78vh, 880px);
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        overflow: hidden;
+      }
+      .chat__header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(0,0,0,.15);
+      }
+      .bot-avatar, .user-avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        display: grid; place-items: center;
+        background: linear-gradient(135deg, #233256 0%, #14203d 100%);
+        color: #cbd5e1;
+        font-weight: 600;
+        flex: 0 0 auto;
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .chat__title {
+        font-weight: 600;
+        letter-spacing: .2px;
+      }
+      .chat__status {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .chat__log {
+        padding: 18px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        scroll-behavior: smooth;
+        background:
+          radial-gradient(700px 260px at 20% -10%, rgba(110,168,254,.08), transparent 60%),
+          radial-gradient(500px 260px at 95% 0%, rgba(34,197,94,.07), transparent 60%);
+      }
+      .msg {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px 12px;
+        align-items: start;
+        animation: fadeIn .25s ease both;
+      }
+      .msg .bubble {
+        padding: 12px 14px;
+        border-radius: var(--radius);
+        max-width: 78%;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .msg--bot .bubble {
+        background: linear-gradient(180deg, var(--bot), #152238);
+      }
+      .msg--user {
+        grid-template-columns: 1fr auto;
+      }
+      .msg--user .bubble {
+        justify-self: end;
+        background: linear-gradient(180deg, rgba(43,127,255,.18), rgba(43,127,255,.12));
+        border: 1px solid rgba(110,168,254,.25);
+      }
+      .meta {
+        grid-column: 1 / -1;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: -6px;
+        padding-left: 46px;
+      }
+      .chat__input {
+        border-top: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+        padding: 12px;
+      }
+      .form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+      .textbox {
+        width: 100%;
+        resize: none;
+        height: 44px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--input);
+        color: var(--text);
+        outline: none;
+        transition: border-color .2s ease, box-shadow .2s ease, height .2s ease;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+      }
+      .textbox:focus {
+        border-color: rgba(110,168,254,.6);
+        box-shadow: 0 0 0 3px rgba(110,168,254,.15);
+      }
+      .send {
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(110,168,254,.35);
+        background: linear-gradient(180deg, rgba(110,168,254,.22), rgba(110,168,254,.18));
+        color: #ebf3ff;
+        font-weight: 600;
+        letter-spacing: .2px;
+        cursor: pointer;
+        transition: transform .04s ease, filter .2s ease, box-shadow .2s ease;
+        box-shadow: 0 6px 18px rgba(110,168,254,.18);
+      }
+      .send:hover { filter: brightness(1.05); }
+      .send:active { transform: translateY(1px); }
+      .hint {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="chat" id="chat">
+        <div class="chat__header">
+          <div class="bot-avatar">AI</div>
+          <div>
+            <div class="chat__title">FinAdvantage Assistant</div>
+            <div class="chat__status">Online • Ask anything</div>
+          </div>
+        </div>
+
+        <div class="chat__log" id="log">
+          <% if (userInput) { %>
+            <div class="msg msg--user">
+              <div></div>
+              <div class="bubble"><%= userInput %></div>
+              <div class="meta">You • just now</div>
+            </div>
+          <% } %>
+
+          <% if (response) { %>
+            <div class="msg msg--bot">
+              <div class="bot-avatar">AI</div>
+              <div class="bubble"><%= response %></div>
+              <div class="meta">Assistant • just now</div>
+            </div>
+          <% } else { %>
+            <div class="msg msg--bot">
+              <div class="bot-avatar">AI</div>
+              <div class="bubble">Hi! How can I help today?</div>
+              <div class="meta">Assistant</div>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="chat__input">
+          <form class="form" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <textarea
+              class="textbox"
+              name="userInput"
+              placeholder="Type a message…"
+              rows="1"
+              oninput="autoGrow(this)"></textarea>
+            <button class="send" type="submit">Send</button>
+          </form>
+          <div class="hint">Shift+Enter for newline • Enter to send</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Auto grow textarea and keep log scrolled to bottom on render
+      function autoGrow(el) {
+        el.style.height = '44px';
+        el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+      }
+      (function() {
+        const log = document.getElementById('log');
+        if (log) log.scrollTop = log.scrollHeight;
+
+        // Submit on Enter, newline on Shift+Enter
+        const ta = document.querySelector('.textbox');
+        if (ta) {
+          ta.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.target.form.submit();
+            }
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
